@@ -34,8 +34,8 @@ const Features = () => {
     },
     {
       icon: Shield,
-      title: "Government Verified",
-      description: "All donors and requests are verified through government databases for safety.",
+      title: "Verified & Secure",
+      description: "All donors and requests are thoroughly verified through secure databases for safety.",
       gradient: "from-secondary/10 to-secondary/5",
     },
   ];

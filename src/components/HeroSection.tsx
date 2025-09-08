@@ -18,7 +18,7 @@ const HeroSection = () => {
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm">
               <Heart className="h-4 w-4" />
-              <span>Government Certified Blood Donation Platform</span>
+              <span>Trusted Blood Donation Network</span>
             </div>
             
             <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
@@ -28,7 +28,7 @@ const HeroSection = () => {
             
             <p className="text-xl text-muted-foreground">
               Connect with verified blood donors instantly. Your donation can save up to 3 lives. 
-              Join India's most trusted blood donation network.
+              Join our trusted blood donation network.
             </p>
             
             <div className="flex flex-wrap gap-4">
