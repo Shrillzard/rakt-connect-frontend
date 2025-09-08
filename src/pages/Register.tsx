@@ -61,14 +61,22 @@ const Register = () => {
       return;
     }
 
+    // Store profile data in localStorage
+    const profileData = {
+      ...formData,
+      registrationDate: new Date().toISOString(),
+    };
+    localStorage.setItem("userProfile", JSON.stringify(profileData));
+
     toast({
       title: "Registration Successful!",
       description: "Welcome to RaktKosh. You're now part of our life-saving community.",
     });
     
+    // Navigate to profile page
     setTimeout(() => {
-      navigate("/");
-    }, 2000);
+      navigate("/profile");
+    }, 1500);
   };
 
   return (
