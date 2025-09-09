@@ -24,8 +24,9 @@ const FindDonors = () => {
     location: "",
     urgency: "normal",
   });
+  const [isSearchActive, setIsSearchActive] = useState(false);
 
-  const [donors] = useState<Donor[]>([
+  const [allDonors] = useState<Donor[]>([
     {
       id: "1",
       name: "Rahul S.",
@@ -66,13 +67,69 @@ const FindDonors = () => {
       available: true,
       verified: false,
     },
+    {
+      id: "5",
+      name: "Vikram P.",
+      bloodGroup: "O-",
+      location: "Gurgaon, Haryana",
+      distance: "15 km",
+      lastDonation: "5 months ago",
+      available: true,
+      verified: true,
+    },
+    {
+      id: "6",
+      name: "Anita G.",
+      bloodGroup: "A-",
+      location: "Noida, UP",
+      distance: "10 km",
+      lastDonation: "1 month ago",
+      available: true,
+      verified: true,
+    },
   ]);
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
+  // Filter donors based on search parameters
+  const getFilteredDonors = () => {
+    if (!isSearchActive) return allDonors;
+    
+    return allDonors.filter(donor => {
+      // Filter by blood group
+      if (searchParams.bloodGroup && donor.bloodGroup !== searchParams.bloodGroup) {
+        return false;
+      }
+      
+      // Filter by location (case-insensitive partial match)
+      if (searchParams.location && 
+          !donor.location.toLowerCase().includes(searchParams.location.toLowerCase())) {
+        return false;
+      }
+      
+      // Filter by urgency (show only available donors for critical/urgent)
+      if ((searchParams.urgency === "critical" || searchParams.urgency === "urgent") && 
+          !donor.available) {
+        return false;
+      }
+      
+      return true;
+    });
+  };
+
+  const filteredDonors = getFilteredDonors();
+
   const handleSearch = () => {
-    // Search logic will be implemented here
-    console.log("Searching with params:", searchParams);
+    setIsSearchActive(true);
+  };
+
+  const handleClearFilters = () => {
+    setSearchParams({
+      bloodGroup: "",
+      location: "",
+      urgency: "normal",
+    });
+    setIsSearchActive(false);
   };
 
   return (
@@ -140,11 +197,16 @@ const FindDonors = () => {
                   </Select>
                 </div>
                 
-                <div className="flex items-end">
-                  <Button onClick={handleSearch} className="w-full">
+                <div className="flex items-end gap-2">
+                  <Button onClick={handleSearch} className="flex-1">
                     <Search className="mr-2 h-4 w-4" />
-                    Search Donors
+                    Search
                   </Button>
+                  {isSearchActive && (
+                    <Button onClick={handleClearFilters} variant="outline">
+                      Clear
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -153,12 +215,38 @@ const FindDonors = () => {
           {/* Search Results */}
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold">Available Donors</h2>
-              <Badge variant="secondary">{donors.length} donors found</Badge>
+              <h2 className="text-2xl font-semibold">
+                {isSearchActive ? "Search Results" : "Available Donors"}
+              </h2>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">{filteredDonors.length} donors found</Badge>
+                {isSearchActive && searchParams.bloodGroup && (
+                  <Badge variant="outline">Blood: {searchParams.bloodGroup}</Badge>
+                )}
+                {isSearchActive && searchParams.location && (
+                  <Badge variant="outline">Location: {searchParams.location}</Badge>
+                )}
+              </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              {donors.map((donor) => (
+            {filteredDonors.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <p className="text-muted-foreground">
+                    {isSearchActive 
+                      ? "No donors found matching your criteria. Try adjusting your filters."
+                      : "No donors available at the moment."}
+                  </p>
+                  {isSearchActive && (
+                    <Button onClick={handleClearFilters} variant="outline" className="mt-4">
+                      Clear Filters
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {filteredDonors.map((donor) => (
                 <Card key={donor.id} className={`${!donor.available ? 'opacity-60' : ''} hover:shadow-lg transition-shadow`}>
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-4">
@@ -220,6 +308,7 @@ const FindDonors = () => {
                 </Card>
               ))}
             </div>
+            )}
           </div>
         </div>
       </div>
