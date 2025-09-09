@@ -300,7 +300,11 @@ const FindDonors = () => {
                         <Phone className="mr-2 h-4 w-4" />
                         Contact Donor
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.location.href = `/donor/${donor.id}`}
+                      >
                         View Profile
                       </Button>
                     </div>
