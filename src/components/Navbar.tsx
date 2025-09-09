@@ -1,19 +1,39 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Heart, Phone, Menu, X, Droplet } from "lucide-react";
-import { useState } from "react";
+import { Heart, Phone, Menu, X, Droplet, User } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check if user data exists in localStorage
+    const userData = localStorage.getItem("userProfile");
+    setIsLoggedIn(!!userData);
+
+    // Listen for storage changes
+    const handleStorageChange = () => {
+      const userData = localStorage.getItem("userProfile");
+      setIsLoggedIn(!!userData);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    // Custom event for same-tab updates
+    window.addEventListener("userLoginStateChanged", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("userLoginStateChanged", handleStorageChange);
+    };
+  }, []);
 
   const navLinks = [
     { name: "Home", path: "/" },
-    { name: "Register", path: "/register" },
-    { name: "Profile", path: "/profile" },
+    !isLoggedIn && { name: "Register", path: "/register" },
+    isLoggedIn && { name: "Profile", path: "/profile" },
     { name: "Find Donors", path: "/find-donors" },
-    { name: "Blood Banks", path: "/blood-banks" },
-    { name: "About", path: "/about" },
-  ];
+  ].filter(Boolean);
 
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90 border-b">
@@ -47,11 +67,20 @@ const Navbar = () => {
                 Emergency
               </Button>
             </Link>
-            <Link to="/register">
-              <Button variant="hero" size="sm">
-                Donate Blood
-              </Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link to="/profile">
+                <Button variant="hero" size="sm">
+                  <User className="h-4 w-4" />
+                  Profile
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/register">
+                <Button variant="hero" size="sm">
+                  Donate Blood
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -88,11 +117,20 @@ const Navbar = () => {
                     Emergency
                   </Button>
                 </Link>
-                <Link to="/register" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="hero" size="sm" className="w-full">
-                    Donate Blood
-                  </Button>
-                </Link>
+                {isLoggedIn ? (
+                  <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="hero" size="sm" className="w-full">
+                      <User className="h-4 w-4" />
+                      Profile
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to="/register" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="hero" size="sm" className="w-full">
+                      Donate Blood
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>

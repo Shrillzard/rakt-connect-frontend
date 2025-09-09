@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 import { 
   User, 
   Mail, 
@@ -16,7 +17,8 @@ import {
   Edit,
   Award,
   Clock,
-  Activity
+  Activity,
+  LogOut
 } from "lucide-react";
 
 interface UserProfile {
@@ -37,6 +39,7 @@ interface UserProfile {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
@@ -47,6 +50,16 @@ const Profile = () => {
       navigate("/register");
     }
   }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("userProfile");
+    window.dispatchEvent(new Event("userLoginStateChanged"));
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    navigate("/");
+  };
 
   const calculateAge = (dob: string) => {
     const birthDate = new Date(dob);
@@ -109,10 +122,16 @@ const Profile = () => {
                 </div>
               </div>
             </div>
-            <Button onClick={() => navigate("/register")} variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate("/register")} variant="outline">
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Profile
+              </Button>
+              <Button onClick={handleLogout} variant="outline">
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </div>

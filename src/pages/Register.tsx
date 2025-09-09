@@ -67,15 +67,18 @@ const Register = () => {
       registrationDate: new Date().toISOString(),
     };
     localStorage.setItem("userProfile", JSON.stringify(profileData));
+    
+    // Dispatch custom event to update navbar
+    window.dispatchEvent(new Event("userLoginStateChanged"));
 
     toast({
       title: "Registration Successful!",
       description: "Welcome to RaktKosh. You're now part of our life-saving community.",
     });
     
-    // Navigate to profile page
+    // Navigate to home page
     setTimeout(() => {
-      navigate("/profile");
+      navigate("/");
     }, 1500);
   };
 
