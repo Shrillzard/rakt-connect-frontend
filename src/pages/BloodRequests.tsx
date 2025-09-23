@@ -22,15 +22,23 @@ const BloodRequests = () => {
   const [requests, setRequests] = useState<BloodRequest[]>([]);
 
   useEffect(() => {
-    // Load blood requests from localStorage
-    const requestDetails = localStorage.getItem("bloodRequestDetails");
-    if (requestDetails) {
-      const parsedRequests = JSON.parse(requestDetails);
+    // Get current user
+    const currentUser = localStorage.getItem("currentUser");
+    const userEmail = currentUser ? JSON.parse(currentUser).email : null;
+    
+    // Load blood requests where current user is the donor (received requests)
+    const allRequests = localStorage.getItem("bloodRequestDetails");
+    if (allRequests && userEmail) {
+      const parsedRequests = JSON.parse(allRequests);
+      // Filter for requests where the current user is the donor
+      const receivedRequests = parsedRequests.filter((req: BloodRequest) => 
+        req.donorName === "Current User" || req.donorId === userEmail
+      );
       // Sort by date, newest first
-      parsedRequests.sort((a: BloodRequest, b: BloodRequest) => 
+      receivedRequests.sort((a: BloodRequest, b: BloodRequest) => 
         new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime()
       );
-      setRequests(parsedRequests);
+      setRequests(receivedRequests);
     }
   }, []);
 
@@ -88,8 +96,8 @@ const BloodRequests = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">Blood Requests</h1>
-              <p className="text-muted-foreground">View and manage your blood requests</p>
+              <h1 className="text-3xl font-bold">Blood Donation Requests</h1>
+              <p className="text-muted-foreground">View blood donation requests from seekers</p>
             </div>
           </div>
 
@@ -139,9 +147,9 @@ const BloodRequests = () => {
             <Card>
               <CardContent className="p-12 text-center">
                 <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Blood Requests</h3>
+                <h3 className="text-lg font-semibold mb-2">No Blood Donation Requests</h3>
                 <p className="text-muted-foreground mb-4">
-                  You haven't sent any blood requests yet.
+                  You haven't received any blood donation requests yet.
                 </p>
                 <Button onClick={() => navigate("/find-donors")}>
                   Find Donors
@@ -159,11 +167,12 @@ const BloodRequests = () => {
                           <User className="h-6 w-6 text-primary" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg">{request.donorName}</h3>
+                          <h3 className="font-semibold text-lg">Blood Seeker</h3>
+                          <p className="text-sm text-muted-foreground">Requested by: {request.requestedBy}</p>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                             <span className="flex items-center gap-1">
                               <Droplet className="h-3 w-3" />
-                              {request.bloodGroup}
+                              {request.bloodGroup} needed
                             </span>
                             <span className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
@@ -183,13 +192,38 @@ const BloodRequests = () => {
                         <Clock className="h-3 w-3" />
                         Requested {formatDate(request.requestDate)}
                       </span>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => navigate(`/donor/${request.donorId}`)}
-                      >
-                        View Donor Profile
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Update request status to accepted
+                            const updatedRequests = requests.map(r => 
+                              r === request ? { ...r, status: "accepted" } : r
+                            );
+                            setRequests(updatedRequests);
+                            localStorage.setItem("bloodRequestDetails", JSON.stringify(updatedRequests));
+                          }}
+                          disabled={request.status !== "pending"}
+                        >
+                          Accept Request
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Update request status to rejected
+                            const updatedRequests = requests.map(r => 
+                              r === request ? { ...r, status: "rejected" } : r
+                            );
+                            setRequests(updatedRequests);
+                            localStorage.setItem("bloodRequestDetails", JSON.stringify(updatedRequests));
+                          }}
+                          disabled={request.status !== "pending"}
+                        >
+                          Decline
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
