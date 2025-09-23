@@ -30,6 +30,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "Home", path: "/" },
+    !isLoggedIn && { name: "Sign In", path: "/signin" },
     !isLoggedIn && { name: "Register", path: "/register" },
     isLoggedIn && { name: "Profile", path: "/profile" },
     { name: "Find Donors", path: "/find-donors" },

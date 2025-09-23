@@ -289,16 +289,16 @@ const Profile = () => {
                 <Button 
                   variant="hero" 
                   className="w-full"
-                  onClick={() => navigate("/find-donors")}
+                  onClick={() => navigate("/blood-requests")}
                 >
-                  Find Donors
+                  View Blood Requests
                 </Button>
                 <Button 
                   variant="outline" 
                   className="w-full"
                   onClick={() => navigate("/emergency")}
                 >
-                  Request Blood
+                  Emergency
                 </Button>
                 <Button 
                   variant="outline" 

@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Droplet, Phone, User, Clock, CheckCircle } from "lucide-react";
+import { Search, MapPin, Droplet, Send, User, Clock, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface Donor {
   id: string;
@@ -25,6 +26,8 @@ const FindDonors = () => {
     urgency: "normal",
   });
   const [isSearchActive, setIsSearchActive] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [requestedDonors, setRequestedDonors] = useState<string[]>([]);
 
   const [allDonors] = useState<Donor[]>([
     {
@@ -91,6 +94,48 @@ const FindDonors = () => {
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
+  useEffect(() => {
+    // Check if user is logged in
+    const userData = localStorage.getItem("userProfile");
+    if (userData) {
+      setUserProfile(JSON.parse(userData));
+    }
+
+    // Get existing blood requests
+    const requests = localStorage.getItem("bloodRequests");
+    if (requests) {
+      setRequestedDonors(JSON.parse(requests));
+    }
+  }, []);
+
+  const handleRequestBlood = (donor: Donor) => {
+    if (!userProfile) {
+      toast.error("Please sign in to request blood");
+      return;
+    }
+
+    // Store the blood request
+    const updatedRequests = [...requestedDonors, donor.id];
+    setRequestedDonors(updatedRequests);
+    localStorage.setItem("bloodRequests", JSON.stringify(updatedRequests));
+
+    // Store detailed request info
+    const requestDetails = JSON.parse(localStorage.getItem("bloodRequestDetails") || "[]");
+    requestDetails.push({
+      donorId: donor.id,
+      donorName: donor.name,
+      bloodGroup: donor.bloodGroup,
+      location: donor.location,
+      requestedBy: userProfile.name,
+      requestDate: new Date().toISOString(),
+      urgency: searchParams.urgency,
+      status: "pending"
+    });
+    localStorage.setItem("bloodRequestDetails", JSON.stringify(requestDetails));
+
+    toast.success(`Blood request sent to ${donor.name}`);
+  };
+
   // Filter donors based on search parameters
   const getFilteredDonors = () => {
     if (!isSearchActive) return allDonors;
@@ -138,6 +183,16 @@ const FindDonors = () => {
       
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
+          {/* Display logged in user */}
+          {userProfile && (
+            <div className="mb-4 p-3 bg-primary/10 rounded-lg flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-primary" />
+                <span className="text-sm">Logged in as: <strong>{userProfile.name}</strong> ({userProfile.email})</span>
+              </div>
+              <Badge variant="secondary">{userProfile.bloodGroup}</Badge>
+            </div>
+          )}
           {/* Search Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-4">Find Blood Donors</h1>
@@ -295,10 +350,11 @@ const FindDonors = () => {
                         variant="default" 
                         size="sm" 
                         className="flex-1"
-                        disabled={!donor.available}
+                        disabled={!donor.available || requestedDonors.includes(donor.id)}
+                        onClick={() => handleRequestBlood(donor)}
                       >
-                        <Phone className="mr-2 h-4 w-4" />
-                        Contact Donor
+                        <Send className="mr-2 h-4 w-4" />
+                        {requestedDonors.includes(donor.id) ? "Request Sent" : "Request Blood"}
                       </Button>
                       <Button 
                         variant="outline" 
