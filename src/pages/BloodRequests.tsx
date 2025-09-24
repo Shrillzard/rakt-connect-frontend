@@ -82,16 +82,6 @@ const BloodRequests = () => {
     setRequests(combinedRequests);
   }, []);
 
-  const getUrgencyBadge = (urgency: string) => {
-    switch (urgency) {
-      case "critical":
-        return <Badge variant="destructive">Critical</Badge>;
-      case "urgent":
-        return <Badge className="bg-orange-500">Urgent</Badge>;
-      default:
-        return <Badge variant="secondary">Normal</Badge>;
-    }
-  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -222,7 +212,6 @@ const BloodRequests = () => {
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        {getUrgencyBadge(request.urgency)}
                         {getStatusBadge(request.status)}
                       </div>
                     </div>
