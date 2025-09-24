@@ -20,17 +20,29 @@ const SignIn = () => {
     
     // Accept any email and password - dummy authentication
     const dummyProfile = {
-      name: "Demo User",
+      name: "John Doe",
       email: formData.email,
       bloodGroup: "A+",
-      location: "Delhi, India",
+      location: "Connaught Place, Delhi",
       phone: "+91 9876543210",
+      dateOfBirth: "1995-03-15",
+      gender: "Male",
+      age: 29,
+      weight: 72,
       lastDonation: "2 months ago",
       donationCount: 5,
+      address: "123, Green Park, New Delhi - 110016",
+      emergencyContact: "+91 9876543211",
+      medicalHistory: "No major health issues",
+      allergies: "None",
+      medications: "None",
+      isAvailable: true,
+      preferredDonationTime: "Weekends",
     };
     
     // Store the dummy profile
     localStorage.setItem("userProfile", JSON.stringify(dummyProfile));
+    localStorage.setItem("currentUser", JSON.stringify(dummyProfile));
     
     // Dispatch custom event for same-tab updates
     window.dispatchEvent(new Event("userLoginStateChanged"));
