@@ -7,6 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Search, MapPin, Droplet, Send, User, Clock, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Donor {
   id: string;
@@ -28,8 +35,11 @@ const FindDonors = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [requestedDonors, setRequestedDonors] = useState<string[]>([]);
+  const [selectedDonor, setSelectedDonor] = useState<Donor | null>(null);
+  const [bloodGroupDialog, setBloodGroupDialog] = useState(false);
+  const [selectedBloodGroup, setSelectedBloodGroup] = useState("");
 
-  const [allDonors] = useState<Donor[]>([
+  const [allDonors, setAllDonors] = useState<Donor[]>([
     {
       id: "1",
       name: "Rahul S.",
@@ -97,8 +107,35 @@ const FindDonors = () => {
   useEffect(() => {
     // Check if user is logged in
     const userData = localStorage.getItem("userProfile");
+    const currentUser = localStorage.getItem("currentUser");
+    
     if (userData) {
       setUserProfile(JSON.parse(userData));
+    }
+    
+    // Add current user as a donor if logged in
+    if (currentUser) {
+      const user = JSON.parse(currentUser);
+      const userAsDonor: Donor = {
+        id: user.email,
+        name: user.name || "Current User",
+        bloodGroup: user.bloodGroup || "O+",
+        location: user.location || "Delhi",
+        distance: "0 km",
+        lastDonation: "Never",
+        available: true,
+        verified: true,
+      };
+      
+      // Add current user to donors list
+      setAllDonors(prevDonors => {
+        // Check if user already exists
+        const exists = prevDonors.some(d => d.id === user.email);
+        if (!exists) {
+          return [userAsDonor, ...prevDonors];
+        }
+        return prevDonors;
+      });
     }
 
     // Get existing blood requests
@@ -114,26 +151,44 @@ const FindDonors = () => {
       return;
     }
 
+    // Set selected donor and open blood group dialog
+    setSelectedDonor(donor);
+    setSelectedBloodGroup(userProfile.bloodGroup || "");
+    setBloodGroupDialog(true);
+  };
+
+  const confirmBloodRequest = () => {
+    if (!selectedDonor || !selectedBloodGroup) {
+      toast.error("Please select a blood group");
+      return;
+    }
+
     // Store the blood request
-    const updatedRequests = [...requestedDonors, donor.id];
+    const updatedRequests = [...requestedDonors, selectedDonor.id];
     setRequestedDonors(updatedRequests);
     localStorage.setItem("bloodRequests", JSON.stringify(updatedRequests));
 
     // Store detailed request info
     const requestDetails = JSON.parse(localStorage.getItem("bloodRequestDetails") || "[]");
+    const currentUser = localStorage.getItem("currentUser");
+    const userData = currentUser ? JSON.parse(currentUser) : userProfile;
+    
     requestDetails.push({
-      donorId: donor.id,
-      donorName: donor.name,
-      bloodGroup: donor.bloodGroup,
-      location: donor.location,
-      requestedBy: userProfile.name,
+      donorId: selectedDonor.id,
+      donorName: selectedDonor.name,
+      bloodGroup: selectedBloodGroup,
+      location: selectedDonor.location,
+      requestedBy: userData.name || userProfile.name,
       requestDate: new Date().toISOString(),
       urgency: searchParams.urgency,
       status: "pending"
     });
     localStorage.setItem("bloodRequestDetails", JSON.stringify(requestDetails));
 
-    toast.success(`Blood request sent to ${donor.name}`);
+    toast.success(`Blood request sent to ${selectedDonor.name} for ${selectedBloodGroup} blood`);
+    setBloodGroupDialog(false);
+    setSelectedDonor(null);
+    setSelectedBloodGroup("");
   };
 
   // Filter donors based on search parameters
@@ -372,6 +427,54 @@ const FindDonors = () => {
           </div>
         </div>
       </div>
+
+      {/* Blood Group Selection Dialog */}
+      <Dialog open={bloodGroupDialog} onOpenChange={setBloodGroupDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select Your Blood Group</DialogTitle>
+            <DialogDescription>
+              Please select your blood group to request blood from {selectedDonor?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Your Blood Group</label>
+              <Select 
+                value={selectedBloodGroup} 
+                onValueChange={setSelectedBloodGroup}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your blood group" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bloodGroups.map(group => (
+                    <SelectItem key={group} value={group}>{group}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Droplet className="h-4 w-4" />
+              <span>Requesting from donor with blood group: {selectedDonor?.bloodGroup}</span>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setBloodGroupDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={confirmBloodRequest}
+              disabled={!selectedBloodGroup}
+            >
+              Send Request
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

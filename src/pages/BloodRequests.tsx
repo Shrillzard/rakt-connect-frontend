@@ -26,20 +26,60 @@ const BloodRequests = () => {
     const currentUser = localStorage.getItem("currentUser");
     const userEmail = currentUser ? JSON.parse(currentUser).email : null;
     
-    // Load blood requests where current user is the donor (received requests)
+    // Create dummy blood requests
+    const dummyRequests: BloodRequest[] = [
+      {
+        donorId: userEmail || "user1",
+        donorName: "You",
+        bloodGroup: "O+",
+        location: "Connaught Place, Delhi",
+        requestedBy: "Amit Singh",
+        requestDate: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        urgency: "critical",
+        status: "pending"
+      },
+      {
+        donorId: userEmail || "user1",
+        donorName: "You",
+        bloodGroup: "O+",
+        location: "Saket, Delhi",
+        requestedBy: "Priya Sharma",
+        requestDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        urgency: "urgent",
+        status: "accepted"
+      },
+      {
+        donorId: userEmail || "user1",
+        donorName: "You",
+        bloodGroup: "O+",
+        location: "Dwarka, Delhi",
+        requestedBy: "Raj Kumar",
+        requestDate: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+        urgency: "normal",
+        status: "pending"
+      }
+    ];
+    
+    // Load actual blood requests
     const allRequests = localStorage.getItem("bloodRequestDetails");
+    let combinedRequests = [...dummyRequests];
+    
     if (allRequests && userEmail) {
       const parsedRequests = JSON.parse(allRequests);
       // Filter for requests where the current user is the donor
-      const receivedRequests = parsedRequests.filter((req: BloodRequest) => 
-        req.donorName === "Current User" || req.donorId === userEmail
+      const receivedRequests = parsedRequests.filter((req: BloodRequest) => {
+        const userData = JSON.parse(currentUser);
+        return req.donorName === userData?.name || req.donorId === userEmail || req.donorName === "You";
+      }
       );
-      // Sort by date, newest first
-      receivedRequests.sort((a: BloodRequest, b: BloodRequest) => 
-        new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime()
-      );
-      setRequests(receivedRequests);
+      combinedRequests = [...dummyRequests, ...receivedRequests];
     }
+    
+    // Sort by date, newest first
+    combinedRequests.sort((a: BloodRequest, b: BloodRequest) => 
+      new Date(b.requestDate).getTime() - new Date(a.requestDate).getTime()
+    );
+    setRequests(combinedRequests);
   }, []);
 
   const getUrgencyBadge = (urgency: string) => {
