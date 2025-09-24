@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Search, MapPin, Droplet, Send, User, Clock, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -38,6 +39,9 @@ const FindDonors = () => {
   const [selectedDonor, setSelectedDonor] = useState<Donor | null>(null);
   const [bloodGroupDialog, setBloodGroupDialog] = useState(false);
   const [selectedBloodGroup, setSelectedBloodGroup] = useState("");
+  const [guestDialogOpen, setGuestDialogOpen] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestBloodGroup, setGuestBloodGroup] = useState("");
 
   const [allDonors, setAllDonors] = useState<Donor[]>([
     {
@@ -146,14 +150,31 @@ const FindDonors = () => {
   }, []);
 
   const handleRequestBlood = (donor: Donor) => {
+    setSelectedDonor(donor);
+    
     if (!userProfile) {
-      toast.error("Please sign in to request blood");
+      // Open guest dialog for non-logged-in users
+      setGuestDialogOpen(true);
+    } else {
+      // Open blood group dialog for logged-in users
+      setSelectedBloodGroup(userProfile.bloodGroup || "");
+      setBloodGroupDialog(true);
+    }
+  };
+
+  const handleGuestSubmit = () => {
+    if (!guestName.trim()) {
+      toast.error("Please enter your name");
       return;
     }
-
-    // Set selected donor and open blood group dialog
-    setSelectedDonor(donor);
-    setSelectedBloodGroup(userProfile.bloodGroup || "");
+    if (!guestBloodGroup) {
+      toast.error("Please select your blood group");
+      return;
+    }
+    
+    // Close guest dialog and open blood group selection
+    setGuestDialogOpen(false);
+    setSelectedBloodGroup(guestBloodGroup);
     setBloodGroupDialog(true);
   };
 
@@ -173,12 +194,15 @@ const FindDonors = () => {
     const currentUser = localStorage.getItem("currentUser");
     const userData = currentUser ? JSON.parse(currentUser) : userProfile;
     
+    // Use guest name if not logged in
+    const requesterName = userData ? (userData.name || userProfile?.name) : guestName;
+    
     requestDetails.push({
       donorId: selectedDonor.id,
       donorName: selectedDonor.name,
       bloodGroup: selectedBloodGroup,
       location: selectedDonor.location,
-      requestedBy: userData.name || userProfile.name,
+      requestedBy: requesterName,
       requestDate: new Date().toISOString(),
       urgency: searchParams.urgency,
       status: "pending"
@@ -189,6 +213,8 @@ const FindDonors = () => {
     setBloodGroupDialog(false);
     setSelectedDonor(null);
     setSelectedBloodGroup("");
+    setGuestName("");
+    setGuestBloodGroup("");
   };
 
   // Filter donors based on search parameters
@@ -427,6 +453,62 @@ const FindDonors = () => {
           </div>
         </div>
       </div>
+
+      {/* Guest Information Dialog */}
+      <Dialog open={guestDialogOpen} onOpenChange={setGuestDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request Blood</DialogTitle>
+            <DialogDescription>
+              Please provide your information to request blood from {selectedDonor?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Your Name</label>
+              <Input
+                placeholder="Enter your name"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Your Blood Group</label>
+              <Select 
+                value={guestBloodGroup} 
+                onValueChange={setGuestBloodGroup}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your blood group" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bloodGroups.map(group => (
+                    <SelectItem key={group} value={group}>{group}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setGuestDialogOpen(false);
+                setGuestName("");
+                setGuestBloodGroup("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleGuestSubmit}
+              disabled={!guestName.trim() || !guestBloodGroup}
+            >
+              Continue
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Blood Group Selection Dialog */}
       <Dialog open={bloodGroupDialog} onOpenChange={setBloodGroupDialog}>
